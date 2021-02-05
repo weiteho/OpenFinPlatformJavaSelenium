@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchWindowException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -34,6 +35,13 @@ public class OpenFinPlatformSelenium {
 					webDriver.switchTo().window(name);
 					System.out.println("found window title: " + webDriver.getTitle());
 					System.out.println("found window url: " + webDriver.getCurrentUrl());
+					
+					if (webDriver instanceof JavascriptExecutor) {
+						JavascriptExecutor js = (JavascriptExecutor) webDriver;
+						System.out.println("identity: " +  js.executeScript("return fin.me.identity"));
+						System.out.println("isWindow: " +  js.executeScript("return fin.me.isWindow"));
+					}
+					
 					if (webDriver.getTitle().equals(windowTitle)) {
 						found = true;
 						break;
