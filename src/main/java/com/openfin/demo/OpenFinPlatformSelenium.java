@@ -35,13 +35,6 @@ public class OpenFinPlatformSelenium {
 					webDriver.switchTo().window(name);
 					System.out.println("found window title: " + webDriver.getTitle());
 					System.out.println("found window url: " + webDriver.getCurrentUrl());
-					
-					if (webDriver instanceof JavascriptExecutor) {
-						JavascriptExecutor js = (JavascriptExecutor) webDriver;
-						System.out.println("identity: " +  js.executeScript("return fin.me.identity"));
-						System.out.println("isWindow: " +  js.executeScript("return fin.me.isWindow"));
-					}
-					
 					if (webDriver.getTitle().equals(windowTitle)) {
 						found = true;
 						break;
@@ -64,6 +57,52 @@ public class OpenFinPlatformSelenium {
 		}
 		return found;
 	}
+	
+	private static boolean switchToViewByTitle(WebDriver webDriver, String windowTitle) throws Exception {
+		boolean found = false;
+		long start = System.currentTimeMillis();
+		while (!found) {
+			for (String name : webDriver.getWindowHandles()) {
+				try {
+					webDriver.switchTo().window(name);
+					
+					if (webDriver instanceof JavascriptExecutor) {
+						JavascriptExecutor js = (JavascriptExecutor) webDriver;
+						System.out.println("identity: " +  js.executeScript("return fin.me.identity"));
+						System.out.println("isWindow: " +  js.executeScript("return fin.me.isWindow"));
+						Object isView = js.executeScript("return fin.me.isView");
+						System.out.println("isView: " +  isView);
+						if (isView instanceof Boolean) {
+							Boolean bIsView = (Boolean) isView;
+							if (bIsView) {
+								if (webDriver.getTitle().equals(windowTitle)) {
+									js.executeScript("fin.View.getCurrentSync().focus()");
+									found = true;
+									break;
+								}
+							}
+						}
+					}
+					
+				}
+				catch (NoSuchWindowException wexp) {
+					// some windows may get closed during Runtime startup
+					// so may get this exception depending on timing
+					System.out.println("Ignoring NoSuchWindowException " + name);
+				}
+			}
+			Thread.sleep(1000);
+			if ((System.currentTimeMillis() - start) > 5 * 1000) {
+				break;
+			}
+		}
+
+		if (!found) {
+			System.out.println(windowTitle + " not found");
+		}
+		return found;
+	}
+	
 
 	/**
 	 * Sleep
@@ -107,7 +146,7 @@ public class OpenFinPlatformSelenium {
 				driver.findElement(By.id("addTab")).click();
 			}
 			sleep(5);
-			if (switchWindow(driver, "My App")) {
+			if (switchToViewByTitle(driver, "My App")) {
 				System.out.println("switched to My App Tab");
 				sleep(5);
 				System.out.println("click on ClickMe button");
